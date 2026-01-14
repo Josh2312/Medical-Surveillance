@@ -1,0 +1,7 @@
+{
+  "name": "MediVision Surveillance Dashboard",
+  "description": "A high-performance medical surveillance platform for clinics to monitor patient vitals, track symptomatic trends, and receive AI-driven public health risk assessments.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
