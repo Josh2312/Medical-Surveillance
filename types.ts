@@ -39,6 +39,11 @@ export enum SmokingStatus {
   NON = 'Non-smoker'
 }
 
+export interface ClinicSettings {
+  clinicName: string;
+  doctorName: string;
+}
+
 export interface Company {
   id: string;
   name: string;
@@ -93,6 +98,17 @@ export enum Severity {
   CRITICAL = 'Critical'
 }
 
+export interface ChemicalHealthEffects {
+  respiratory: string[];
+  cns: string[];
+  skinEyes: string[];
+  other: {
+    details: string;
+    notes: string;
+  };
+  currentHealthEffects: string;
+}
+
 export interface PatientRecord {
   id: string;
   timestamp: string;
@@ -109,6 +125,10 @@ export interface PatientRecord {
   notes: string;
   outcome?: Outcome;
   companyName?: string;
+  
+  // New fields for Certificate
+  icPassport?: string;
+  companyAddress?: string;
   
   // External uploaded report
   externalReport?: {
@@ -155,6 +175,7 @@ export interface PatientRecord {
     ppeUsage: { status: string; notes: string };
     usePPEWhenHandling: { status: string; notes: string };
   };
+  chemicalHealthEffects?: ChemicalHealthEffects;
 
   // New examination sections
   physicalExam?: {

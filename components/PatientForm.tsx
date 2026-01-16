@@ -15,6 +15,8 @@ const PatientForm: React.FC<PatientFormProps> = ({ onAddRecord, workers, compani
   const defaultFormData = {
     patientName: '',
     companyName: '',
+    icPassport: '',
+    companyAddress: '',
     visitDate: new Date().toISOString().split('T')[0],
     age: 30,
     gender: 'Male',
@@ -63,6 +65,13 @@ const PatientForm: React.FC<PatientFormProps> = ({ onAddRecord, workers, compani
       poisoningSigns: { status: 'No', notes: '' },
       ppeUsage: { status: 'No', notes: '' },
       usePPEWhenHandling: { status: 'No', notes: '' }
+    },
+    chemicalHealthEffects: {
+      respiratory: [],
+      cns: [],
+      skinEyes: [],
+      other: { details: '', notes: '' },
+      currentHealthEffects: ''
     },
     physicalExam: {
       anthropometry: { weight: '', height: '', bmi: '' },
@@ -141,6 +150,7 @@ const PatientForm: React.FC<PatientFormProps> = ({ onAddRecord, workers, compani
         familyOtherHistory: initialData.familyOtherHistory || defaultFormData.familyOtherHistory,
         occupationalHistory: initialData.occupationalHistory || defaultFormData.occupationalHistory,
         trainingHistory: initialData.trainingHistory || defaultFormData.trainingHistory,
+        chemicalHealthEffects: initialData.chemicalHealthEffects || defaultFormData.chemicalHealthEffects,
         physicalExam: initialData.physicalExam || defaultFormData.physicalExam,
         organSystems: initialData.organSystems || defaultFormData.organSystems,
         targetOrganTest: initialData.targetOrganTest || defaultFormData.targetOrganTest,
@@ -194,11 +204,15 @@ const PatientForm: React.FC<PatientFormProps> = ({ onAddRecord, workers, compani
 
   const handleWorkerSelect = (workerName: string) => {
     const worker = workers.find(w => w.name === workerName);
+    const company = worker ? companies.find(c => c.id === worker.companyId) : null;
+    
     if (worker) {
       setFormData({
         ...formData,
         patientName: worker.name,
         companyName: worker.companyName,
+        icPassport: worker.icPassport,
+        companyAddress: company ? company.address : '',
         age: worker.age,
         gender: worker.gender,
         hazards: worker.hazards,
@@ -223,6 +237,23 @@ const PatientForm: React.FC<PatientFormProps> = ({ onAddRecord, workers, compani
     } else if (field === 'biologicalMonitoring') {
       setFormData({ ...formData, biologicalMonitoring: [...formData.biologicalMonitoring, { determinant: '', result: '' }] });
     }
+  };
+
+  const handleCheckboxChange = (category: 'respiratory' | 'cns' | 'skinEyes', value: string) => {
+    const currentList = formData.chemicalHealthEffects[category];
+    let newList;
+    if (currentList.includes(value)) {
+        newList = currentList.filter((item: string) => item !== value);
+    } else {
+        newList = [...currentList, value];
+    }
+    setFormData({
+        ...formData,
+        chemicalHealthEffects: {
+            ...formData.chemicalHealthEffects,
+            [category]: newList
+        }
+    });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -273,6 +304,10 @@ const PatientForm: React.FC<PatientFormProps> = ({ onAddRecord, workers, compani
                   <div className="flex justify-between">
                     <span className="text-slate-500 uppercase font-bold">Company</span>
                     <span className="text-slate-200 font-bold">{formData.companyName || '---'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500 uppercase font-bold">IC / Passport</span>
+                    <span className="text-slate-200 font-bold">{formData.icPassport || '---'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-500 uppercase font-bold">Age/Gender</span>
@@ -337,6 +372,39 @@ const PatientForm: React.FC<PatientFormProps> = ({ onAddRecord, workers, compani
                           </div>
                       </div>
                    </div>
+
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-slate-800">
+                      <div className="space-y-2">
+                        <label className={labelClass}>Relevant Family History</label>
+                        <textarea 
+                          className={`${inputClass} h-32 resize-none`} 
+                          placeholder="e.g. Hypertension, Diabetes, Asthma in family..." 
+                          value={formData.familyOtherHistory.familyHistory}
+                          onChange={e => setFormData({
+                            ...formData, 
+                            familyOtherHistory: {
+                              ...formData.familyOtherHistory, 
+                              familyHistory: e.target.value
+                            }
+                          })} 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className={labelClass}>Other History (If Relevant)</label>
+                        <textarea 
+                          className={`${inputClass} h-32 resize-none`} 
+                          placeholder="Any other relevant medical or social history..." 
+                          value={formData.familyOtherHistory.otherHistory}
+                          onChange={e => setFormData({
+                            ...formData, 
+                            familyOtherHistory: {
+                              ...formData.familyOtherHistory, 
+                              otherHistory: e.target.value
+                            }
+                          })} 
+                        />
+                      </div>
+                   </div>
                  </div>
                )}
                {step === 4 && (
@@ -368,6 +436,118 @@ const PatientForm: React.FC<PatientFormProps> = ({ onAddRecord, workers, compani
                         </div>
                       ))}
                     </div>
+
+                    {/* NEW SECTION: History of Health Effects */}
+                    <div className="mt-8 pt-8 border-t border-slate-800 animate-in fade-in slide-in-from-right-4">
+                       <h3 className={sectionTitle}>History of Health Effects Due to Chemical Exposure</h3>
+                       
+                       {/* Respiratory */}
+                       <div className="bg-slate-950/30 p-6 rounded-2xl border border-slate-800 mb-6">
+                           <h4 className="text-sm font-bold text-white uppercase tracking-tight mb-4">Respiratory</h4>
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                               {['Breathing discomfort or difficulty', 'Cough', 'Sore throat', 'Sneezing'].map(opt => (
+                                   <label key={opt} className="flex items-center gap-3 p-3 bg-slate-900 rounded-xl border border-slate-800 cursor-pointer hover:border-blue-500/50 transition-colors">
+                                       <input 
+                                           type="checkbox" 
+                                           className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-blue-600 focus:ring-blue-500/20"
+                                           checked={formData.chemicalHealthEffects.respiratory.includes(opt)}
+                                           onChange={() => handleCheckboxChange('respiratory', opt)}
+                                       />
+                                       <span className="text-sm text-slate-300 font-medium">{opt}</span>
+                                   </label>
+                               ))}
+                           </div>
+                       </div>
+                       
+                       {/* CNS */}
+                       <div className="bg-slate-950/30 p-6 rounded-2xl border border-slate-800 mb-6">
+                           <h4 className="text-sm font-bold text-white uppercase tracking-tight mb-4">Central Nervous System</h4>
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                               {['Drowsiness', 'Dizziness', 'Headache', 'Confusion/Lethargy', 'Nausea and Vomiting'].map(opt => (
+                                   <label key={opt} className="flex items-center gap-3 p-3 bg-slate-900 rounded-xl border border-slate-800 cursor-pointer hover:border-blue-500/50 transition-colors">
+                                       <input 
+                                           type="checkbox" 
+                                           className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-blue-600 focus:ring-blue-500/20"
+                                           checked={formData.chemicalHealthEffects.cns.includes(opt)}
+                                           onChange={() => handleCheckboxChange('cns', opt)}
+                                       />
+                                       <span className="text-sm text-slate-300 font-medium">{opt}</span>
+                                   </label>
+                               ))}
+                           </div>
+                       </div>
+
+                       {/* Skin & Eyes */}
+                       <div className="bg-slate-950/30 p-6 rounded-2xl border border-slate-800 mb-6">
+                           <h4 className="text-sm font-bold text-white uppercase tracking-tight mb-4">Skin and Eyes</h4>
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                               {['Eyes irritations', 'Blurred Vision', 'Blisters', 'Burns', 'Itching', 'Rash and Redness'].map(opt => (
+                                   <label key={opt} className="flex items-center gap-3 p-3 bg-slate-900 rounded-xl border border-slate-800 cursor-pointer hover:border-blue-500/50 transition-colors">
+                                       <input 
+                                           type="checkbox" 
+                                           className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-blue-600 focus:ring-blue-500/20"
+                                           checked={formData.chemicalHealthEffects.skinEyes.includes(opt)}
+                                           onChange={() => handleCheckboxChange('skinEyes', opt)}
+                                       />
+                                       <span className="text-sm text-slate-300 font-medium">{opt}</span>
+                                   </label>
+                               ))}
+                           </div>
+                       </div>
+
+                       {/* Other */}
+                       <div className="bg-slate-950/30 p-6 rounded-2xl border border-slate-800 mb-6">
+                           <h4 className="text-sm font-bold text-white uppercase tracking-tight mb-4">Other</h4>
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                               <div>
+                                   <label className={labelClass}>Elaborate Frequency, Severity etc.</label>
+                                   <input 
+                                        className={inputClass} 
+                                        value={formData.chemicalHealthEffects.other.details}
+                                        onChange={(e) => setFormData({
+                                            ...formData,
+                                            chemicalHealthEffects: {
+                                                ...formData.chemicalHealthEffects,
+                                                other: { ...formData.chemicalHealthEffects.other, details: e.target.value }
+                                            }
+                                        })}
+                                   />
+                               </div>
+                               <div>
+                                   <label className={labelClass}>Notes</label>
+                                   <input 
+                                        className={inputClass} 
+                                        value={formData.chemicalHealthEffects.other.notes}
+                                        onChange={(e) => setFormData({
+                                            ...formData,
+                                            chemicalHealthEffects: {
+                                                ...formData.chemicalHealthEffects,
+                                                other: { ...formData.chemicalHealthEffects.other, notes: e.target.value }
+                                            }
+                                        })}
+                                   />
+                               </div>
+                           </div>
+                       </div>
+
+                       {/* Clinical Findings */}
+                       <h3 className={sectionTitle}>Clinical Findings</h3>
+                       <div className="bg-slate-950/30 p-6 rounded-2xl border border-slate-800">
+                           <label className={labelClass}>Current Health Effects Due To CHTH exposure (Notes)</label>
+                           <textarea 
+                                className={`${inputClass} h-32 resize-none`} 
+                                value={formData.chemicalHealthEffects.currentHealthEffects}
+                                onChange={(e) => setFormData({
+                                    ...formData,
+                                    chemicalHealthEffects: {
+                                        ...formData.chemicalHealthEffects,
+                                        currentHealthEffects: e.target.value
+                                    }
+                                })}
+                           />
+                       </div>
+
+                   </div>
                  </div>
                )}
                {step === 6 && (

@@ -1,6 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { PatientRecord, Severity, Outcome } from '../types';
+import { generateMedicalReport } from '../utils/pdfGenerator';
 
 interface PatientListProps {
   records: PatientRecord[];
@@ -120,23 +121,31 @@ const PatientList: React.FC<PatientListProps> = ({ records, onUpdateRecord, onEd
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex flex-col items-start gap-2">
-                    <button 
-                      onClick={() => onEditRecord(record)}
-                      className="text-[10px] font-black text-blue-400 uppercase border-b-2 border-transparent hover:border-blue-400 transition-all tracking-widest"
-                    >
-                      📄 Edit / View Report
-                    </button>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => onEditRecord(record)}
+                        className="flex-1 text-[10px] font-black bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 px-3 py-1.5 rounded-lg border border-blue-500/30 transition-all uppercase tracking-widest"
+                      >
+                        ✏️ Edit
+                      </button>
+                      <button 
+                        onClick={() => generateMedicalReport(record)}
+                        className="flex-1 text-[10px] font-black bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 px-3 py-1.5 rounded-lg border border-emerald-500/30 transition-all uppercase tracking-widest"
+                      >
+                        📄 Report
+                      </button>
+                    </div>
                     
                     {record.externalReport ? (
-                      <div className="flex items-center gap-2 bg-slate-800 px-2 py-1 rounded-lg border border-slate-700">
-                        <span className="text-[10px] text-slate-300 truncate max-w-[100px]">{record.externalReport.fileName}</span>
+                      <div className="flex items-center gap-2 bg-slate-800 px-2 py-1 rounded-lg border border-slate-700 w-full">
+                        <span className="text-[10px] text-slate-300 truncate flex-1">{record.externalReport.fileName}</span>
                         <a href={record.externalReport.fileUrl} target="_blank" rel="noreferrer" className="text-[10px] font-black text-blue-400 hover:text-blue-300">View</a>
                         <button onClick={() => handleUploadClick(record.id)} className="text-[10px] font-black text-slate-500 hover:text-white ml-1">↻</button>
                       </div>
                     ) : (
                       <button 
                         onClick={() => handleUploadClick(record.id)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-[10px] font-black uppercase tracking-widest border border-slate-700 transition-all"
+                        className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-[10px] font-black uppercase tracking-widest border border-slate-700 transition-all"
                       >
                         <span className="text-lg leading-none">+</span> Upload Doc
                       </button>
